@@ -111,13 +111,7 @@ module Yu
 
     def build(args, options)
       target_services = args.map(&method(:normalise_service_name_from_dir))
-      if target_services.none?
-        target_gemfiled_services = gemfiled_services
-      else
-        target_gemfiled_services = gemfiled_services & target_services
-      end
 
-      target_gemfiled_services.each(&method(:package_gems_for_service))
       info "Building images..."
       execute_command("docker-compose build #{target_services.join(" ")}")
     end
@@ -139,8 +133,6 @@ module Yu
     end
 
     def reset(args, options)
-      info "Packaging gems in all services containing a Gemfile"
-      gemfiled_services.each(&method(:package_gems_for_service))
       info "Killing any running containers"
       run_command("docker-compose kill")
       info "Removing all existing containers"
@@ -273,15 +265,6 @@ module Yu
           end
         end
       end
-    end
-
-    def package_gems_for_service(service)
-      info "Packaging gems for #{service}"
-      run_command("cd #{service} && bundle package --all --no-install")
-    end
-
-    def gemfiled_services
-      services_with_file("Gemfile")
     end
 
     def testable_services
